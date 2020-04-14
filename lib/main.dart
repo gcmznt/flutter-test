@@ -8,10 +8,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.red,
-        accentColor: Colors.pink,
-      ),
+      theme: ThemeData.light(),
+      darkTheme: ThemeData.dark(),
       home: MyHomePage(title: 'Flutter Demo Home Page'),
     );
   }

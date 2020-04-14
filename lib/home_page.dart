@@ -1,5 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+Future<http.Response> fetch(String type, int id) {
+  return http.get('https://jsonplaceholder.typicode.com/$type/$id');
+}
+
+Future<Album> fetchAlbum(int id) async {
+  final response = await fetch('albums', id);
+
+  if (response.statusCode == 200) {
+    // If the server did return a 200 OK response,
+    // then parse the JSON.
+    return Album.fromJson(json.decode(response.body));
+  } else {
+    // If the server did not return a 200 OK response,
+    // then throw an exception.
+    throw Exception('Failed to load album');
+  }
+}
+
+class Album {
+  final int userId;
+  final int id;
+  final String title;
+
+  Album({this.userId, this.id, this.title});
+
+  factory Album.fromJson(Map<String, dynamic> json) {
+    return Album(
+      userId: json['userId'],
+      id: json['id'],
+      title: json['title'],
+    );
+  }
+}
 
 class MyHomePage extends StatefulWidget {
   MyHomePage({Key key, this.title}) : super(key: key);
@@ -11,12 +47,13 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-  var _increment = 3;
+  int _counter = 1;
+  Future<Album> futureAlbum = fetchAlbum(1);
 
   void _incrementCounter() {
     setState(() {
-      _counter = _increment + _counter;
+      _counter++;
+      futureAlbum = fetchAlbum(_counter);
     });
   }
 
@@ -45,7 +82,18 @@ class _MyHomePageState extends State<MyHomePage> {
                   MaterialPageRoute(builder: (context) => SecondPage()),
                 );
               },
-            )
+            ),
+            FutureBuilder<Album>(
+              future: futureAlbum,
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  return Text(snapshot.data.title);
+                } else if (snapshot.hasError) {
+                  return Text("Errore: ${snapshot.error}");
+                }
+                return CircularProgressIndicator();
+              },
+            ),
           ],
         ),
       ),
