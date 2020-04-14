@@ -8,6 +8,7 @@ Future<http.Response> fetch(String type, int id) {
 }
 
 Future<Album> fetchAlbum(int id) async {
+  await new Future.delayed(const Duration(milliseconds: 2000));
   final response = await fetch('albums', id);
 
   if (response.statusCode == 200) {
@@ -49,6 +50,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 1;
   Future<Album> futureAlbum = fetchAlbum(1);
+  Future init = new Future.delayed(const Duration(milliseconds: 2000));
 
   void _incrementCounter() {
     setState(() {
@@ -59,50 +61,61 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              'You have pushed the button this many times:',
+    return FutureBuilder(
+        future: init,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return new Center(
+              child: new CircularProgressIndicator(),
+            );
+          } else if (snapshot.hasError) {
+            return new Text('Error: ${snapshot.error}');
+          }
+          return Scaffold(
+            appBar: AppBar(
+              title: Text(widget.title),
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.display1,
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Text(
+                    'You have pushed the button this many times:',
+                  ),
+                  Text(
+                    '$_counter',
+                    style: Theme.of(context).textTheme.display1,
+                  ),
+                  RaisedButton(
+                    child: Text('Open route'),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => SecondPage()),
+                      );
+                    },
+                  ),
+                  FutureBuilder<Album>(
+                    future: futureAlbum,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Text("Loading...");
+                      } else if (snapshot.hasError) {
+                        return Text("Errore: ${snapshot.error}");
+                      }
+                      return Text(snapshot.data.title);
+                    },
+                  ),
+                ],
+              ),
             ),
-            RaisedButton(
-              child: Text('Open route'),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => SecondPage()),
-                );
-              },
+            floatingActionButton: FloatingActionButton(
+              onPressed: _incrementCounter,
+              tooltip: 'Increment',
+              child: Icon(Icons.add),
             ),
-            FutureBuilder<Album>(
-              future: futureAlbum,
-              builder: (context, snapshot) {
-                if (snapshot.hasData) {
-                  return Text(snapshot.data.title);
-                } else if (snapshot.hasError) {
-                  return Text("Errore: ${snapshot.error}");
-                }
-                return CircularProgressIndicator();
-              },
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
-      ),
-    );
+          );
+        });
   }
 }
 
